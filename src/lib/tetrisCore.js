@@ -126,6 +126,10 @@ export function getNextPiece(queueState) {
     return { nextPiece: createPiece(nextKey), newQueue: q };
 }
 
+export function checkHighScore(currentScore, storedHighScore) {
+    return currentScore > storedHighScore ? currentScore : storedHighScore;
+}
+
 export function evaluateBoard(field) {
     if (!field) return 999;
     let holes = 0, height = 0, bumpiness = 0;

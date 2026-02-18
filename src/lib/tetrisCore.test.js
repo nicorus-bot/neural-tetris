@@ -1,72 +1,113 @@
-import { generateNewPiece, rotatePiece, checkCollision, TETROMINOS, checkHighScore } from './tetrisCore'; 
+import { 
+  TETROMINOS, 
+  rotatePiece, 
+  checkCollision, 
+  calculateDropPosition, 
+  initializeQueue, 
+  getNextPiece, 
+  checkHighScore,
+  evaluateBoard,
+  getBestMove
+} from './tetrisCore';
 
 describe('Tetris Core Logic', () => {
   const FIELD_WIDTH = 10;
-// ... (rest of the file)
   const FIELD_HEIGHT = 20;
+  const createEmptyField = () => Array(FIELD_HEIGHT).fill(0).map(() => Array(FIELD_WIDTH).fill(0));
 
-  // Test 1: Piece Generation
-  test('should generate a random piece upon initialization', () => {
-    const piece = generateNewPiece();
-    expect(piece).toHaveProperty('shape');
-    expect(piece).toHaveProperty('position');
-    expect(piece).toHaveProperty('data'); // Data object must exist
-    expect(['I', 'O', 'T', 'S', 'Z', 'J', 'L']).toContain(piece.shape);
+  describe('Piece Management', () => {
+    test('initializeQueue should return a starting piece and a queue', () => {
+      const { current, queue } = initializeQueue();
+      expect(current).toHaveProperty('shape');
+      expect(current).toHaveProperty('data');
+      expect(queue.length).toBeGreaterThan(0);
+    });
+
+    test('getNextPiece should provide a new piece and update the queue', () => {
+      const initial = initializeQueue();
+      const { nextPiece, newQueue } = getNextPiece({ queue: initial.queue });
+      expect(nextPiece).toHaveProperty('shape');
+      expect(newQueue.length).toBeGreaterThanOrEqual(initial.queue.length - 1);
+    });
+
+    test('TETROMINOS should contain all standard shapes', () => {
+      const keys = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+      keys.forEach(key => {
+        expect(TETROMINOS).toHaveProperty(key);
+        expect(TETROMINOS[key]).toHaveProperty('shapes');
+        expect(TETROMINOS[key]).toHaveProperty('color');
+      });
+    });
   });
 
-  // Test 2: Initial Position Check
-  test('should place the initial piece near the top center of the field', () => {
-    const piece = generateNewPiece();
-    // Initial Y position must be near the top (0 or 1)
-    expect(piece.position.y).toBeLessThanOrEqual(1); 
-    // Initial X position must ensure the piece fits horizontally
-    expect(piece.position.x).toBeGreaterThanOrEqual(0);
-    // Test I piece width (4 blocks) and O piece width (2 blocks) approximately.
-    expect(piece.position.x).toBeLessThan(FIELD_WIDTH - 2); 
+  describe('Movement and Collision', () => {
+    test('rotatePiece should cycle through orientations', () => {
+      const piece = { shape: 'T', orientation: 0, data: TETROMINOS['T'], position: { x: 3, y: 0 } };
+      const rotated = rotatePiece(piece, 1);
+      expect(rotated.orientation).toBe(1);
+      const rotatedBack = rotatePiece(rotated, -1);
+      expect(rotatedBack.orientation).toBe(0);
+    });
+
+    test('checkCollision should detect walls', () => {
+      const field = createEmptyField();
+      const piece = { shape: 'I', orientation: 0, data: TETROMINOS['I'], position: { x: 0, y: 0 } };
+      // Move left out of bounds
+      expect(checkCollision(piece, field, { dx: -1, dy: 0 })).toBe(true);
+      // Move right (I piece at x=0 with dx=7 is ok, dx=8 depends on shape width)
+      // I piece shape at orientation 0 is [[0,0,0,0],[1,1,1,1],...] which is 4 wide.
+      // At x=7, dx=0: blocks at x=7,8,9,10 -> collision (width 10)
+      piece.position.x = 7;
+      expect(checkCollision(piece, field, { dx: 0, dy: 0 })).toBe(true);
+    });
+
+    test('checkCollision should detect floor', () => {
+      const field = createEmptyField();
+      const piece = { shape: 'O', orientation: 0, data: TETROMINOS['O'], position: { x: 3, y: 18 } };
+      // O piece is 2x2. At y=18, blocks are at y=18,19. Next dy=1 makes it 19,20 -> collision.
+      expect(checkCollision(piece, field, { dx: 0, dy: 1 })).toBe(true);
+    });
+
+    test('checkCollision should detect other blocks', () => {
+      const field = createEmptyField();
+      field[5][5] = 'G';
+      const piece = { shape: 'O', orientation: 0, data: TETROMINOS['O'], position: { x: 4, y: 4 } };
+      // O piece (2x2) at (4,4) covers (4,4), (5,4), (4,5), (5,5).
+      // (5,5) is occupied, so it should collide immediately.
+      expect(checkCollision(piece, field, { dx: 0, dy: 0 })).toBe(true);
+    });
+
+    test('calculateDropPosition should return the lowest possible Y', () => {
+      const field = createEmptyField();
+      const piece = { shape: 'O', orientation: 0, data: TETROMINOS['O'], position: { x: 3, y: 0 } };
+      const dropY = calculateDropPosition(piece, field);
+      // Floor is at y=19. O piece is 2x2. Lowest top-left Y is 18.
+      expect(dropY).toBe(18);
+    });
   });
 
-  // Test 3: Rotation
-  test('should correctly rotate a piece by 90 degrees', () => {
-    // Initialize a T piece with orientation 0
-    const tPieceData = TETROMINOS['T'];
-    const tPiece = { 
-        shape: 'T', 
-        orientation: 0, 
-        position: { x: 3, y: 5 }, 
-        data: tPieceData
-    };
-    const rotated = rotatePiece(tPiece, 1); // Rotate clockwise (+1)
+  describe('AI and Scoring', () => {
+    test('checkHighScore should return the higher value', () => {
+      expect(checkHighScore(1000, 500)).toBe(1000);
+      expect(checkHighScore(500, 1000)).toBe(1000);
+    });
 
-    expect(rotated.orientation).toBe(1);
-    // Check that other properties are preserved
-    expect(rotated.position).toEqual(tPiece.position);
-    expect(rotated.data).toBe(tPieceData);
-  });
+    test('evaluateBoard should return a score (lower is better usually)', () => {
+      const field = createEmptyField();
+      const emptyScore = evaluateBoard(field);
+      field[19][0] = 'I';
+      const filledScore = evaluateBoard(field);
+      expect(filledScore).not.toBe(emptyScore);
+    });
 
-  // Test 4: Collision Detection (Placeholder for Wall Check)
-  test('should detect collision when attempting an invalid move', () => {
-    // This test validates the collision function signature/intent.
-    const iPieceData = TETROMINOS['I'];
-    const piece = { 
-        shape: 'I', 
-        orientation: 0, 
-        position: { x: 7, y: 5 }, 
-        data: iPieceData // Ensure data exists
-    }; 
-    const field = Array(FIELD_HEIGHT).fill(0).map(() => Array(FIELD_WIDTH).fill(0)); // Empty field
-
-    // Start at x=7, move dx=1. I piece is 4 blocks wide, so right edge goes to 7+4 = 11 (out of bounds 10).
-    const isColliding = checkCollision(piece, field, { dx: 1, dy: 0 }); 
-    expect(isColliding).toBe(true); 
-  });
-
-  // Test 5: High Score Persistence Check Interface
-  test('should handle high score update logic correctly', () => {
-    // Logic for checking if a new score warrants updating the stored high score
-    const currentScore = 5000;
-    const storedHighScore = 4500;
-    
-    const newHighScore = checkHighScore(currentScore, storedHighScore);
-    expect(newHighScore).toBe(5000);
+    test('getBestMove should return a valid position and orientation', () => {
+      const field = createEmptyField();
+      const piece = { shape: 'I', orientation: 0, data: TETROMINOS['I'], position: { x: 3, y: 0 } };
+      const move = getBestMove(piece, field);
+      expect(move).toHaveProperty('x');
+      expect(move).toHaveProperty('orientation');
+      expect(move.x).toBeGreaterThanOrEqual(-2);
+      expect(move.x).toBeLessThan(10);
+    });
   });
 });
