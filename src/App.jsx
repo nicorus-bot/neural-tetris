@@ -98,6 +98,7 @@ function App() {
     const [p1, setP1] = useState({ field: createEmptyField(), current: null, next: null, queue: [], hold: null, canHold: true, score: 0, effect: null, clearingLines: [] });
     const [cpu, setCpu] = useState({ field: createEmptyField(), current: null, next: null, queue: [], hold: null, canHold: true, score: 0, effect: null, clearingLines: [] });
     const [isMuted, setIsMuted] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     const p1DropRef = useRef(Date.now());
     const cpuDropRef = useRef(Date.now());
@@ -118,13 +119,44 @@ function App() {
     useEffect(() => {
         const handleResize = () => {
             const h = window.innerHeight - 20, w = window.innerWidth - 20;
-            const size = Math.min(Math.floor(h / 24), Math.floor(w / 35));
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            
+            // スマホの場合は横に並べるのが難しいため、サイズをさらに調整
+            const size = mobile 
+                ? Math.min(Math.floor(h / 30), Math.floor(w / 15))
+                : Math.min(Math.floor(h / 24), Math.floor(w / 35));
             setCellSize(Math.max(10, size));
         };
         window.addEventListener('resize', handleResize);
         handleResize();
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    const handleAction = useCallback((action) => {
+        if (isGameOver) return;
+        setP1(prev => {
+            let { current, field, hold, canHold, next, queue } = prev; if (!current) return prev;
+            switch (action) {
+                case 'left': if (!checkCollision(current, field, { dx: -1, dy: 0 })) current = { ...current, position: { ...current.position, x: current.position.x - 1 } }; break;
+                case 'right': if (!checkCollision(current, field, { dx: 1, dy: 0 })) current = { ...current, position: { ...current.position, x: current.position.x + 1 } }; break;
+                case 'down': if (!checkCollision(current, field, { dx: 0, dy: 1 })) { current = { ...current, position: { ...current.position, y: current.position.y + 1 } }; p1DropRef.current = Date.now(); } break;
+                case 'rotate': const r = rotatePiece(current, 1); if (!checkCollision(r, field, { dx: 0, dy: 0 })) current = r; break;
+                case 'drop': 
+                    const fy = calculateDropPosition(current, field);
+                    const { newState, clearedCount, gameOver } = processMerge(prev, { ...current, position: { ...current.position, y: fy } }, setCpu);
+                    if (gameOver) { setIsGameOver(true); setWinner('CPU CORE'); }
+                    if (clearedCount > 1) triggerEffect(setP1, 'attack-launch');
+                    if (clearedCount > 0) setTimeout(() => setP1(s => ({ ...s, clearingLines: [] })), 300);
+                    p1DropRef.current = Date.now(); return newState;
+                case 'hold': if (canHold) {
+                    if (hold) { const t = { shape: hold, data: TETROMINOS[hold], orientation: 0, position: { x: 3, y: 0 } }; return { ...prev, current: t, hold: current.shape, canHold: false }; }
+                    else { const { nextPiece, newQueue } = getNextPiece({ queue }); return { ...prev, current: next, next: nextPiece, queue: newQueue, hold: current.shape, canHold: false }; }
+                } break;
+            }
+            return { ...prev, current };
+        });
+    }, [isGameOver, setP1, setCpu]);
 
     const triggerEffect = (setter, effectType, duration = 500) => {
         setter(prev => ({ ...prev, effect: effectType }));
@@ -197,20 +229,11 @@ function App() {
             if (isGameOverRef.current) return;
             const now = Date.now();
             if (now - p1DropRef.current > INITIAL_DROP_INTERVAL) {
-                setP1(prev => {
-                    if (!prev.current) return prev;
-                    if (!checkCollision(prev.current, prev.field, { dx: 0, dy: 1 })) return { ...prev, current: { ...prev.current, position: { ...prev.current.position, y: prev.current.position.y + 1 } } };
-                    const { newState, clearedCount, gameOver } = processMerge(prev, prev.current, setCpu);
-                    if (gameOver) { setIsGameOver(true); setWinner('CPU CORE'); }
-                    if (clearedCount > 1) triggerEffect(setP1, 'attack-launch');
-                    if (clearedCount > 0) setTimeout(() => setP1(s => ({ ...s, clearingLines: [] })), 300);
-                    return newState;
-                });
-                p1DropRef.current = now;
+                handleAction('down');
             }
         }, 50);
         return () => clearInterval(timer);
-    }, [isGameOver]);
+    }, [isGameOver, handleAction]);
 
     // CPU Loop
     useEffect(() => {
@@ -250,48 +273,54 @@ function App() {
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (isGameOver) return;
-            setP1(prev => {
-                let { current, field, hold, canHold, next, queue } = prev; if (!current) return prev;
-                switch (e.key) {
-                    case 'ArrowLeft': if (!checkCollision(current, field, { dx: -1, dy: 0 })) current = { ...current, position: { ...current.position, x: current.position.x - 1 } }; break;
-                    case 'ArrowRight': if (!checkCollision(current, field, { dx: 1, dy: 0 })) current = { ...current, position: { ...current.position, x: current.position.x + 1 } }; break;
-                    case 'ArrowDown': if (!checkCollision(current, field, { dx: 0, dy: 1 })) { current = { ...current, position: { ...current.position, y: current.position.y + 1 } }; p1DropRef.current = Date.now(); } break;
-                    case 'ArrowUp': case 'x': const r = rotatePiece(current, 1); if (!checkCollision(r, field, { dx: 0, dy: 0 })) current = r; break;
-                    case ' ': 
-                        const fy = calculateDropPosition(current, field);
-                        const { newState, clearedCount, gameOver } = processMerge(prev, { ...current, position: { ...current.position, y: fy } }, setCpu);
-                        if (gameOver) { setIsGameOver(true); setWinner('CPU CORE'); }
-                        if (clearedCount > 1) triggerEffect(setP1, 'attack-launch');
-                        if (clearedCount > 0) setTimeout(() => setP1(s => ({ ...s, clearingLines: [] })), 300);
-                        p1DropRef.current = Date.now(); return newState;
-                    case 'c': if (canHold) {
-                        if (hold) { const t = { shape: hold, data: TETROMINOS[hold], orientation: 0, position: { x: 3, y: 0 } }; return { ...prev, current: t, hold: current.shape, canHold: false }; }
-                        else { const { nextPiece, newQueue } = getNextPiece({ queue }); return { ...prev, current: next, next: nextPiece, queue: newQueue, hold: current.shape, canHold: false }; }
-                    } break;
-                }
-                return { ...prev, current };
-            });
+            switch (e.key) {
+                case 'ArrowLeft': handleAction('left'); break;
+                case 'ArrowRight': handleAction('right'); break;
+                case 'ArrowDown': handleAction('down'); break;
+                case 'ArrowUp': case 'x': handleAction('rotate'); break;
+                case ' ': handleAction('drop'); break;
+                case 'c': handleAction('hold'); break;
+            }
             if (['ArrowUp', 'ArrowDown', ' ', 'c'].includes(e.key)) e.preventDefault();
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isGameOver]);
+    }, [isGameOver, handleAction]);
+
+    const MobileControls = () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', width: '100%', maxWidth: '300px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                <button onTouchStart={() => handleAction('rotate')} className="ctrl-btn" style={{ width: '60px', height: '60px' }}>🔄</button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+                <button onTouchStart={() => handleAction('hold')} className="ctrl-btn">C</button>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                    <button onTouchStart={() => handleAction('left')} className="ctrl-btn">←</button>
+                    <button onTouchStart={() => handleAction('down')} className="ctrl-btn">↓</button>
+                    <button onTouchStart={() => handleAction('right')} className="ctrl-btn">→</button>
+                </div>
+                <button onTouchStart={() => handleAction('drop')} className="ctrl-btn">⤓</button>
+            </div>
+        </div>
+    );
 
     return (
-        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '10px' : '30px', alignItems: 'center', scale: isMobile ? '0.8' : '1' }}>
                 <Board title="PLAYER" field={p1.field} currentPiece={p1.current} ghostY={p1.current ? calculateDropPosition(p1.current, p1.field) : 0} cellSize={cellSize} score={p1.score} next={p1.next} hold={p1.hold} effect={p1.effect} clearingLines={p1.clearingLines} />
-                <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />
+                {!isMobile && <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />}
                 <Board title="CPU AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
             </div>
             
+            {isMobile && <MobileControls />}
+
             <button onClick={() => setIsMuted(!isMuted)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '10px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }}>
                 {isMuted ? '🔇' : '🔊'}
             </button>
 
             {isGameOver && (
                 <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(12px)' }}>
-                    <h1 style={{ color: winner ? (winner === 'PLAYER' || winner === 'PLAYER 1' ? '#00f0f0' : '#ff4b2b') : '#fff', fontSize: '4em', textShadow: '0 0 30px rgba(255,255,255,0.2)' }}>{winner ? `${winner} WINS` : 'NEURAL TETRIS'}</h1>
+                    <h1 style={{ color: winner ? (winner === 'PLAYER' || winner === 'PLAYER 1' ? '#00f0f0' : '#ff4b2b') : '#fff', fontSize: isMobile ? '2.5em' : '4em', textShadow: '0 0 30px rgba(255,255,255,0.2)' }}>{winner ? `${winner} WINS` : 'NEURAL TETRIS'}</h1>
                     <button onClick={startGame} style={{ marginTop: '30px', padding: '15px 50px', fontSize: '1.2em', cursor: 'pointer', background: 'white', color: 'black', border: 'none', borderRadius: '40px', fontWeight: '900' }}>START BATTLE</button>
                 </div>
             )}
@@ -299,6 +328,24 @@ function App() {
             <style>{`
                 .board-container { transition: transform 0.1s, box-shadow 0.3s; }
                 .effect-attacked { animation: shake 0.4s focus-flash 0.4s; }
+                .ctrl-btn {
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: white;
+                    width: 50px;
+                    height: 50px;
+                    border-radius: 12px;
+                    font-size: 1.2em;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    user-select: none;
+                    -webkit-tap-highlight-color: transparent;
+                }
+                .ctrl-btn:active {
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: scale(0.95);
+                }
                 @keyframes shake {
                     0%, 100% { transform: translateX(0); }
                     20% { transform: translateX(-10px) rotate(-1deg); }
