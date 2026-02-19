@@ -288,25 +288,39 @@ function App() {
     }, [isGameOver, handleAction]);
 
     const MobileControls = () => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', width: '100%', maxWidth: '300px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                <button onTouchStart={() => handleAction('rotate')} className="ctrl-btn" style={{ width: '60px', height: '60px' }}>🔄</button>
+        <div style={{ 
+            position: 'fixed', 
+            bottom: '40px', 
+            left: 0, 
+            right: 0, 
+            padding: '0 20px',
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-end',
+            zIndex: 50,
+            pointerEvents: 'none'
+        }}>
+            {/* 十字キー的な配置 */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gridTemplateRows: 'repeat(2, 60px)', gap: '10px', pointerEvents: 'auto' }}>
+                <div />
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('rotate'); }} className="ctrl-btn" style={{ background: 'rgba(0, 240, 240, 0.3)', border: '2px solid #00f0f0' }}>↻</button>
+                <div />
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('left'); }} className="ctrl-btn">←</button>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('down'); }} className="ctrl-btn">↓</button>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('right'); }} className="ctrl-btn">→</button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-                <button onTouchStart={() => handleAction('hold')} className="ctrl-btn">C</button>
-                <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onTouchStart={() => handleAction('left')} className="ctrl-btn">←</button>
-                    <button onTouchStart={() => handleAction('down')} className="ctrl-btn">↓</button>
-                    <button onTouchStart={() => handleAction('right')} className="ctrl-btn">→</button>
-                </div>
-                <button onTouchStart={() => handleAction('drop')} className="ctrl-btn">⤓</button>
+
+            {/* アクションボタン */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', pointerEvents: 'auto' }}>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '60px', height: '60px', borderRadius: '50%', fontWeight: 'bold' }}>HOLD</button>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)', fontSize: '2em', boxShadow: '0 0 20px rgba(255,255,255,0.1)' }}>▼</button>
             </div>
         </div>
     );
 
     return (
-        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '10px' : '30px', alignItems: 'center', scale: isMobile ? '0.8' : '1' }}>
+        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center', paddingTop: isMobile ? '40px' : '0', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '20px' : '30px', alignItems: 'center', transform: isMobile ? 'scale(0.85)' : 'none' }}>
                 <Board title="PLAYER" field={p1.field} currentPiece={p1.current} ghostY={p1.current ? calculateDropPosition(p1.current, p1.field) : 0} cellSize={cellSize} score={p1.score} next={p1.next} hold={p1.hold} effect={p1.effect} clearingLines={p1.clearingLines} />
                 {!isMobile && <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />}
                 <Board title="CPU AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
