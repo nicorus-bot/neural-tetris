@@ -12,35 +12,32 @@ const createEmptyField = () => Array(FIELD_HEIGHT).fill(0).map(() => Array(FIELD
 const Cell = React.memo(({ type, size = 20, ghost = false, isGrid = false, isClearing = false }) => {
     const colorMap = { 
         0: 'transparent', 
-        I: '#00f2ff', // Cyan
-        O: '#ffe600', // Yellow
-        T: '#bf00ff', // Purple
-        S: '#00ff8c', // Mint
-        Z: '#ff0055', // Pink-Red
-        J: '#0066ff', // Blue
-        L: '#ff9900', // Orange
-        G: '#444' 
+        I: '#33d9ff', // Bright Cyan
+        O: '#ffeb3b', // Sunny Yellow
+        T: '#e040fb', // Electric Purple
+        S: '#00e676', // Spring Green
+        Z: '#ff1744', // Candy Red
+        J: '#2979ff', // Royal Blue
+        L: '#ff9100', // Deep Orange
+        G: '#9e9e9e' 
     };
     const color = colorMap[type] || '#333';
     const style = { 
         width: `${size}px`, height: `${size}px`, boxSizing: 'border-box', position: 'relative',
-        transition: 'background-color 0.1s ease',
-        borderRadius: size > 15 ? '4px' : '2px'
+        transition: 'all 0.1s ease',
+        borderRadius: size > 15 ? '6px' : '3px'
     };
     if (isGrid) {
-        style.border = '0.5px solid rgba(255, 255, 255, 0.08)';
+        style.border = '0.5px solid rgba(0, 0, 0, 0.05)';
     } else if (ghost) { 
-        style.border = `2px solid ${color}`; 
-        style.opacity = 0.3; 
-        style.boxShadow = `0 0 10px ${color}44`;
+        style.border = `2px dashed ${color}`; 
+        style.opacity = 0.4; 
     } else if (type !== 0) {
         style.backgroundColor = isClearing ? '#fff' : color;
-        style.border = '1px solid rgba(255, 255, 255, 0.2)';
+        style.border = '2px solid rgba(255, 255, 255, 0.5)';
         style.boxShadow = isClearing 
             ? '0 0 20px #fff' 
-            : `inset 2px 2px 4px rgba(255, 255, 255, 0.4), inset -2px -2px 4px rgba(0, 0, 0, 0.2), 0 0 12px ${color}aa`;
-        // Glass effect on blocks
-        style.backdropFilter = 'contrast(1.2)';
+            : `0 4px 0 rgba(0, 0, 0, 0.1), inset 2px 2px 4px rgba(255, 255, 255, 0.6)`;
     }
     return <div style={style} className={isClearing ? 'cell-clearing' : ''} />;
 });
@@ -65,7 +62,7 @@ const Board = ({ field, currentPiece, ghostY, cellSize, title, score, next, hold
         return newField;
     }, [field, currentPiece, ghostY]);
 
-    const accentColor = isCPU ? '#ff0055' : '#00f2ff';
+    const accentColor = isCPU ? '#ff4081' : '#00d2ff';
     const boardClassName = `board-container ${effect ? `effect-${effect}` : ''}`;
 
     return (
@@ -75,43 +72,43 @@ const Board = ({ field, currentPiece, ghostY, cellSize, title, score, next, hold
                 fontWeight: '900', 
                 color: '#fff', 
                 letterSpacing: '6px', 
-                textShadow: `0 0 15px ${accentColor}`,
-                background: `linear-gradient(90deg, transparent, ${accentColor}44, transparent)`,
-                padding: '4px 20px',
-                borderRadius: '20px',
-                border: `1px solid ${accentColor}88`
+                textShadow: `2px 2px 0px ${accentColor}`,
+                background: accentColor,
+                padding: '4px 25px',
+                borderRadius: '50px',
+                boxShadow: `0 4px 15px ${accentColor}66`
             }}>
                 {title}
             </div>
             
             <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div className="glass-panel" style={{ width: cellSize * 5, height: cellSize * 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ fontSize: '0.5em', color: accentColor, fontWeight: 'bold', marginBottom: '4px', letterSpacing: '2px' }}>NEXT</div>
+                    <div className="glass-panel" style={{ width: cellSize * 5, height: cellSize * 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.7)' }}>
+                        <div style={{ fontSize: '0.6em', color: '#666', fontWeight: 'bold', marginBottom: '4px', letterSpacing: '1px' }}>NEXT</div>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             {next && next.data.shapes[0].map((row, r) => (<div key={r} style={{ display: 'flex' }}>{row.map((c, idx) => <Cell key={idx} type={c ? next.shape : 0} size={cellSize * 0.7} />)}</div>))}
                         </div>
                     </div>
-                    <div className="glass-panel" style={{ width: cellSize * 5, height: cellSize * 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ fontSize: '0.5em', color: accentColor, fontWeight: 'bold', marginBottom: '4px', letterSpacing: '2px' }}>HOLD</div>
+                    <div className="glass-panel" style={{ width: cellSize * 5, height: cellSize * 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.7)' }}>
+                        <div style={{ fontSize: '0.6em', color: '#666', fontWeight: 'bold', marginBottom: '4px', letterSpacing: '1px' }}>HOLD</div>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             {hold && TETROMINOS[hold].shapes[0].map((row, r) => (<div key={r} style={{ display: 'flex' }}>{row.map((c, idx) => <Cell key={idx} type={c ? hold : 0} size={cellSize * 0.7} />)}</div>))}
                         </div>
                     </div>
-                    <div className="glass-panel" style={{ padding: '10px 0', textAlign: 'center', width: cellSize * 5 }}>
-                        <div style={{ fontSize: '0.5em', color: '#fff', fontWeight: 'bold', opacity: 0.6 }}>SCORE</div>
-                        <div style={{ fontSize: '1.4em', fontWeight: 'bold', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.5)' }}>{score}</div>
+                    <div className="glass-panel" style={{ padding: '10px 0', textAlign: 'center', width: cellSize * 5, background: '#fff' }}>
+                        <div style={{ fontSize: '0.6em', color: '#999', fontWeight: 'bold' }}>SCORE</div>
+                        <div style={{ fontSize: '1.4em', fontWeight: 'bold', color: '#333' }}>{score}</div>
                     </div>
                 </div>
 
                 <div className={boardClassName} style={{ 
-                    border: `4px solid ${accentColor}88`, 
-                    borderRadius: '12px', 
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)', 
+                    border: `6px solid #fff`, 
+                    borderRadius: '16px', 
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)', 
                     position: 'relative', 
                     overflow: 'hidden', 
-                    boxShadow: effect === 'attack-launch' ? `0 0 60px ${accentColor}` : `0 0 30px ${accentColor}33`,
-                    backdropFilter: 'blur(8px)'
+                    boxShadow: `0 10px 30px rgba(0,0,0,0.1)`,
+                    backdropFilter: 'blur(10px)'
                 }}>
                     <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: `repeat(${FIELD_WIDTH}, ${cellSize}px)` }}>
                         {Array(FIELD_HEIGHT * FIELD_WIDTH).fill(0).map((_, i) => <Cell key={i} isGrid size={cellSize} />)}
@@ -328,32 +325,32 @@ function App() {
     const MobileControls = () => (
         <div style={{ 
             position: 'fixed', 
-            bottom: '20px', 
+            bottom: '15px', 
             left: 0, 
             right: 0, 
-            padding: '0 20px',
+            padding: '0 15px',
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'flex-end',
-            zIndex: 50,
+            zIndex: 100,
             pointerEvents: 'none'
         }}>
             {/* 左側：ホールド・ハードドロップ ＆ 移動（十字キー風） */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', pointerEvents: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', pointerEvents: 'auto' }}>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '55px', height: '55px', borderRadius: '12px', fontSize: '0.8em', fontWeight: 'bold' }}>HOLD</button>
-                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '55px', height: '55px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.2)', fontSize: '1.5em' }}>▼</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '65px', height: '65px', borderRadius: '15px', fontSize: '0.9em', fontWeight: 'bold', background: '#ff4081', color: '#fff' }}>HOLD</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '65px', height: '65px', borderRadius: '15px', background: '#ffeb3b', color: '#333', fontSize: '1.8em' }}>▼</button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 55px)', gap: '8px' }}>
-                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('left'); }} className="ctrl-btn">←</button>
-                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('down'); }} className="ctrl-btn">↓</button>
-                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('right'); }} className="ctrl-btn">→</button>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 75px)', gap: '10px' }}>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('left'); }} className="ctrl-btn" style={{ height: '70px', fontSize: '2em' }}>←</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('down'); }} className="ctrl-btn" style={{ height: '70px', fontSize: '2em' }}>↓</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('right'); }} className="ctrl-btn" style={{ height: '70px', fontSize: '2em' }}>→</button>
                 </div>
             </div>
 
             {/* 右側：回転 */}
             <div style={{ pointerEvents: 'auto', paddingBottom: '10px' }}>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('rotate'); }} className="ctrl-btn" style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(0, 240, 240, 0.3)', border: '2px solid #00f0f0', fontSize: '2.5em', boxShadow: '0 0 20px rgba(0, 240, 240, 0.2)' }}>↻</button>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('rotate'); }} className="ctrl-btn" style={{ width: '130px', height: '130px', borderRadius: '50%', background: 'linear-gradient(45deg, #00d2ff, #3a7bd5)', border: '4px solid #fff', fontSize: '3em', boxShadow: '0 8px 25px rgba(0,210,255,0.4)', color: '#fff' }}>↻</button>
             </div>
         </div>
     );
@@ -361,8 +358,8 @@ function App() {
     return (
         <div style={{ 
             height: '100vh', 
-            background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)', 
-            color: '#fff', 
+            background: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)', 
+            color: '#333', 
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center', 
@@ -372,67 +369,53 @@ function App() {
             touchAction: 'none',
             position: 'relative'
         }}>
-            {/* Background Decorations */}
-            <div style={{
-                position: 'absolute',
-                top: '-10%',
-                right: '-5%',
-                width: '600px',
-                height: '600px',
-                background: 'radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, transparent 70%)',
-                filter: 'blur(50px)',
-                zIndex: 1
-            }} />
-            <div style={{
-                position: 'absolute',
-                bottom: '-10%',
-                left: '-5%',
-                width: '500px',
-                height: '500px',
-                background: 'radial-gradient(circle, rgba(255, 0, 85, 0.15) 0%, transparent 70%)',
-                filter: 'blur(50px)',
-                zIndex: 1
-            }} />
+            {/* Background Decorations - Bubbles */}
+            <div style={{ position: 'absolute', top: '10%', left: '5%', width: '100px', height: '100px', background: 'rgba(255,255,255,0.4)', borderRadius: '50%', zIndex: 1, filter: 'blur(2px)' }} />
+            <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: '150px', height: '150px', background: 'rgba(255,255,255,0.3)', borderRadius: '50%', zIndex: 1, filter: 'blur(2px)' }} />
+            <div style={{ position: 'absolute', top: '40%', right: '30%', width: '60px', height: '60px', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', zIndex: 1 }} />
 
-            {/* Character Illustration (Floating AI Mascot) */}
+            {/* Character Illustration (Floating Pop Mascot) */}
             <div style={{
                 position: 'absolute',
-                right: isMobile ? '-50px' : '20px',
-                bottom: isMobile ? '100px' : '50px',
-                width: isMobile ? '150px' : '300px',
-                height: isMobile ? '150px' : '300px',
+                right: isMobile ? '10px' : '40px',
+                bottom: isMobile ? '160px' : '60px',
+                width: isMobile ? '120px' : '280px',
+                height: isMobile ? '120px' : '280px',
                 zIndex: 2,
-                opacity: 0.8,
+                opacity: 0.9,
                 pointerEvents: 'none',
-                animation: 'float 6s ease-in-out infinite'
+                animation: 'float 4s ease-in-out infinite'
             }}>
                 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="100" cy="100" r="80" fill="none" stroke="#00f2ff" strokeWidth="2" strokeDasharray="10,5" />
-                    <circle cx="100" cy="100" r="60" fill="rgba(0, 242, 255, 0.1)" stroke="#00f2ff" strokeWidth="1" />
-                    <path d="M70 80 Q100 60 130 80" stroke="#00f2ff" strokeWidth="4" fill="none" strokeLinecap="round" />
-                    <circle cx="85" cy="100" r="8" fill="#00f2ff">
-                        <animate attributeName="opacity" values="1;0.3;1" dur="3s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="115" cy="100" r="8" fill="#00f2ff">
-                        <animate attributeName="opacity" values="1;0.3;1" dur="3s" repeatCount="indefinite" />
-                    </circle>
-                    <path d="M80 130 Q100 150 120 130" stroke="#00f2ff" strokeWidth="4" fill="none" strokeLinecap="round" />
-                    <path d="M40 100 L20 100 M160 100 L180 100 M100 40 L100 20 M100 160 L100 180" stroke="#ff0055" strokeWidth="2" />
+                    <defs>
+                        <linearGradient id="popGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style={{ stopColor: '#ff9a9e' }} />
+                            <stop offset="100%" style={{ stopColor: '#fad0c4' }} />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="100" cy="100" r="80" fill="url(#popGrad)" stroke="#fff" strokeWidth="4" />
+                    <circle cx="70" cy="85" r="12" fill="#333" />
+                    <circle cx="130" cy="85" r="12" fill="#333" />
+                    <circle cx="75" cy="80" r="4" fill="#fff" />
+                    <circle cx="135" cy="80" r="4" fill="#fff" />
+                    <path d="M70 130 Q100 160 130 130" stroke="#333" strokeWidth="6" fill="none" strokeLinecap="round" />
+                    <circle cx="50" cy="110" r="10" fill="#ff4081" opacity="0.3" />
+                    <circle cx="150" cy="110" r="10" fill="#ff4081" opacity="0.3" />
                 </svg>
             </div>
 
             <div style={{ 
                 display: 'flex', 
                 flexDirection: 'row', 
-                gap: isMobile ? '15px' : '40px', 
+                gap: isMobile ? '10px' : '40px', 
                 alignItems: 'center', 
                 transform: isMobile ? 'scale(0.95)' : 'none',
                 position: 'relative',
                 zIndex: 10
             }}>
                 <Board title="PLAYER" field={p1.field} currentPiece={p1.current} ghostY={p1.current ? calculateDropPosition(p1.current, p1.field) : 0} cellSize={cellSize} score={p1.score} next={p1.next} hold={p1.hold} effect={p1.effect} clearingLines={p1.clearingLines} />
-                <div style={{ width: '2px', height: '400px', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent)' }} />
-                <Board title="NEURAL AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
+                <div style={{ width: '2px', height: '350px', background: 'rgba(0,0,0,0.05)' }} />
+                <Board title="COM AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
             </div>
             
             {isMobile && <MobileControls />}
