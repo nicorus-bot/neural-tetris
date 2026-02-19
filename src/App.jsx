@@ -119,13 +119,12 @@ function App() {
     useEffect(() => {
         const handleResize = () => {
             const h = window.innerHeight - 20, w = window.innerWidth - 20;
-            const mobile = window.innerWidth < 768;
+            const mobile = window.innerWidth < 1024; // 横並びを維持するため基準を変更
             setIsMobile(mobile);
             
-            // スマホの場合は横に並べるのが難しいため、サイズをさらに調整
-            const size = mobile 
-                ? Math.min(Math.floor(h / 30), Math.floor(w / 15))
-                : Math.min(Math.floor(h / 24), Math.floor(w / 35));
+            // 横並び（Landscape）を前提としたサイズ計算
+            // 2つのボード + 中央の隙間を考慮
+            const size = Math.min(Math.floor(h / 25), Math.floor(w / 40));
             setCellSize(Math.max(10, size));
         };
         window.addEventListener('resize', handleResize);
@@ -290,7 +289,7 @@ function App() {
     const MobileControls = () => (
         <div style={{ 
             position: 'fixed', 
-            bottom: '40px', 
+            bottom: '20px', 
             left: 0, 
             right: 0, 
             padding: '0 20px',
@@ -300,8 +299,8 @@ function App() {
             zIndex: 50,
             pointerEvents: 'none'
         }}>
-            {/* 十字キー的な配置 */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gridTemplateRows: 'repeat(2, 60px)', gap: '10px', pointerEvents: 'auto' }}>
+            {/* 十字キー的な配置（左下） */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 50px)', gridTemplateRows: 'repeat(2, 50px)', gap: '8px', pointerEvents: 'auto' }}>
                 <div />
                 <button onTouchStart={(e) => { e.preventDefault(); handleAction('rotate'); }} className="ctrl-btn" style={{ background: 'rgba(0, 240, 240, 0.3)', border: '2px solid #00f0f0' }}>↻</button>
                 <div />
@@ -310,19 +309,19 @@ function App() {
                 <button onTouchStart={(e) => { e.preventDefault(); handleAction('right'); }} className="ctrl-btn">→</button>
             </div>
 
-            {/* アクションボタン */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', pointerEvents: 'auto' }}>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '60px', height: '60px', borderRadius: '50%', fontWeight: 'bold' }}>HOLD</button>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)', fontSize: '2em', boxShadow: '0 0 20px rgba(255,255,255,0.1)' }}>▼</button>
+            {/* アクションボタン（右下） */}
+            <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', pointerEvents: 'auto' }}>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '55px', height: '55px', borderRadius: '50%', fontWeight: 'bold' }}>HOLD</button>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '75px', height: '75px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)', fontSize: '1.8em' }}>▼</button>
             </div>
         </div>
     );
 
     return (
-        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center', paddingTop: isMobile ? '40px' : '0', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '20px' : '30px', alignItems: 'center', transform: isMobile ? 'scale(0.85)' : 'none' }}>
+        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: isMobile ? '15px' : '30px', alignItems: 'center', transform: isMobile ? 'scale(0.8)' : 'none' }}>
                 <Board title="PLAYER" field={p1.field} currentPiece={p1.current} ghostY={p1.current ? calculateDropPosition(p1.current, p1.field) : 0} cellSize={cellSize} score={p1.score} next={p1.next} hold={p1.hold} effect={p1.effect} clearingLines={p1.clearingLines} />
-                {!isMobile && <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />}
+                <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />
                 <Board title="CPU AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
             </div>
             
