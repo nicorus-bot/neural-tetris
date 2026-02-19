@@ -124,7 +124,7 @@ function App() {
             
             // 横並び（Landscape）を前提としたサイズ計算
             // 2つのボード + 中央の隙間を考慮
-            const size = Math.min(Math.floor(h / 25), Math.floor(w / 40));
+            const size = Math.min(Math.floor(h / 23), Math.floor(w / 35));
             setCellSize(Math.max(10, size));
         };
         window.addEventListener('resize', handleResize);
@@ -319,7 +319,7 @@ function App() {
 
     return (
         <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: isMobile ? '15px' : '30px', alignItems: 'center', transform: isMobile ? 'scale(0.8)' : 'none' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: isMobile ? '15px' : '30px', alignItems: 'center', transform: isMobile ? 'scale(0.95)' : 'none' }}>
                 <Board title="PLAYER" field={p1.field} currentPiece={p1.current} ghostY={p1.current ? calculateDropPosition(p1.current, p1.field) : 0} cellSize={cellSize} score={p1.score} next={p1.next} hold={p1.hold} effect={p1.effect} clearingLines={p1.clearingLines} />
                 <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />
                 <Board title="CPU AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
