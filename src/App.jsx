@@ -10,19 +10,37 @@ const INITIAL_DROP_INTERVAL = 800;
 const createEmptyField = () => Array(FIELD_HEIGHT).fill(0).map(() => Array(FIELD_WIDTH).fill(0));
 
 const Cell = React.memo(({ type, size = 20, ghost = false, isGrid = false, isClearing = false }) => {
-    const colorMap = { 0: 'transparent', I: '#00f0f0', O: '#f0f000', T: '#a000f0', S: '#00f000', Z: '#f00000', J: '#0000f0', L: '#f0a000', G: '#444' };
+    const colorMap = { 
+        0: 'transparent', 
+        I: '#00f2ff', // Cyan
+        O: '#ffe600', // Yellow
+        T: '#bf00ff', // Purple
+        S: '#00ff8c', // Mint
+        Z: '#ff0055', // Pink-Red
+        J: '#0066ff', // Blue
+        L: '#ff9900', // Orange
+        G: '#444' 
+    };
     const color = colorMap[type] || '#333';
     const style = { 
         width: `${size}px`, height: `${size}px`, boxSizing: 'border-box', position: 'relative',
-        transition: 'background-color 0.1s ease'
+        transition: 'background-color 0.1s ease',
+        borderRadius: size > 15 ? '4px' : '2px'
     };
-    if (isGrid) style.border = '0.5px solid rgba(255, 255, 255, 0.05)';
-    else if (ghost) { style.border = `1.5px solid ${color}`; style.opacity = 0.2; style.borderRadius = '2px'; }
-    else if (type !== 0) {
+    if (isGrid) {
+        style.border = '0.5px solid rgba(255, 255, 255, 0.08)';
+    } else if (ghost) { 
+        style.border = `2px solid ${color}`; 
+        style.opacity = 0.3; 
+        style.boxShadow = `0 0 10px ${color}44`;
+    } else if (type !== 0) {
         style.backgroundColor = isClearing ? '#fff' : color;
-        style.border = '1px solid rgba(0, 0, 0, 0.1)';
-        style.borderRadius = '3px';
-        style.boxShadow = isClearing ? '0 0 15px #fff' : `inset 1px 1px 2px rgba(255, 255, 255, 0.3), 0 0 8px ${color}88`;
+        style.border = '1px solid rgba(255, 255, 255, 0.2)';
+        style.boxShadow = isClearing 
+            ? '0 0 20px #fff' 
+            : `inset 2px 2px 4px rgba(255, 255, 255, 0.4), inset -2px -2px 4px rgba(0, 0, 0, 0.2), 0 0 12px ${color}aa`;
+        // Glass effect on blocks
+        style.backdropFilter = 'contrast(1.2)';
     }
     return <div style={style} className={isClearing ? 'cell-clearing' : ''} />;
 });
@@ -47,34 +65,54 @@ const Board = ({ field, currentPiece, ghostY, cellSize, title, score, next, hold
         return newField;
     }, [field, currentPiece, ghostY]);
 
-    const accentColor = isCPU ? '#ff4b2b' : '#00f0f0';
+    const accentColor = isCPU ? '#ff0055' : '#00f2ff';
     const boardClassName = `board-container ${effect ? `effect-${effect}` : ''}`;
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontSize: '0.9em', fontWeight: '900', color: accentColor, letterSpacing: '4px', textShadow: `0 0 10px ${accentColor}aa` }}>{title}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', zIndex: 10 }}>
+            <div style={{ 
+                fontSize: '1.2em', 
+                fontWeight: '900', 
+                color: '#fff', 
+                letterSpacing: '6px', 
+                textShadow: `0 0 15px ${accentColor}`,
+                background: `linear-gradient(90deg, transparent, ${accentColor}44, transparent)`,
+                padding: '4px 20px',
+                borderRadius: '20px',
+                border: `1px solid ${accentColor}88`
+            }}>
+                {title}
+            </div>
             
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', padding: '8px', width: cellSize * 4.5, height: cellSize * 4.5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ fontSize: '0.4em', color: '#888', fontWeight: 'bold', marginBottom: '4px' }}>NEXT</div>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="glass-panel" style={{ width: cellSize * 5, height: cellSize * 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ fontSize: '0.5em', color: accentColor, fontWeight: 'bold', marginBottom: '4px', letterSpacing: '2px' }}>NEXT</div>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            {next && next.data.shapes[0].map((row, r) => (<div key={r} style={{ display: 'flex' }}>{row.map((c, idx) => <Cell key={idx} type={c ? next.shape : 0} size={cellSize * 0.65} />)}</div>))}
+                            {next && next.data.shapes[0].map((row, r) => (<div key={r} style={{ display: 'flex' }}>{row.map((c, idx) => <Cell key={idx} type={c ? next.shape : 0} size={cellSize * 0.7} />)}</div>))}
                         </div>
                     </div>
-                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', padding: '8px', width: cellSize * 4.5, height: cellSize * 4.5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ fontSize: '0.4em', color: '#888', fontWeight: 'bold', marginBottom: '4px' }}>HOLD</div>
+                    <div className="glass-panel" style={{ width: cellSize * 5, height: cellSize * 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ fontSize: '0.5em', color: accentColor, fontWeight: 'bold', marginBottom: '4px', letterSpacing: '2px' }}>HOLD</div>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            {hold && TETROMINOS[hold].shapes[0].map((row, r) => (<div key={r} style={{ display: 'flex' }}>{row.map((c, idx) => <Cell key={idx} type={c ? hold : 0} size={cellSize * 0.65} />)}</div>))}
+                            {hold && TETROMINOS[hold].shapes[0].map((row, r) => (<div key={r} style={{ display: 'flex' }}>{row.map((c, idx) => <Cell key={idx} type={c ? hold : 0} size={cellSize * 0.7} />)}</div>))}
                         </div>
                     </div>
-                    <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', padding: '8px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <div style={{ fontSize: '0.4em', color: '#aaa', fontWeight: 'bold' }}>SCORE</div>
-                        <div style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#fff' }}>{score}</div>
+                    <div className="glass-panel" style={{ padding: '10px 0', textAlign: 'center', width: cellSize * 5 }}>
+                        <div style={{ fontSize: '0.5em', color: '#fff', fontWeight: 'bold', opacity: 0.6 }}>SCORE</div>
+                        <div style={{ fontSize: '1.4em', fontWeight: 'bold', color: '#fff', textShadow: '0 0 10px rgba(255,255,255,0.5)' }}>{score}</div>
                     </div>
                 </div>
 
-                <div className={boardClassName} style={{ border: '4px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', backgroundColor: '#000', position: 'relative', overflow: 'hidden', boxShadow: effect === 'attack-launch' ? `0 0 40px ${accentColor}` : '0 0 30px rgba(0,0,0,0.5)' }}>
+                <div className={boardClassName} style={{ 
+                    border: `4px solid ${accentColor}88`, 
+                    borderRadius: '12px', 
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)', 
+                    position: 'relative', 
+                    overflow: 'hidden', 
+                    boxShadow: effect === 'attack-launch' ? `0 0 60px ${accentColor}` : `0 0 30px ${accentColor}33`,
+                    backdropFilter: 'blur(8px)'
+                }}>
                     <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: `repeat(${FIELD_WIDTH}, ${cellSize}px)` }}>
                         {Array(FIELD_HEIGHT * FIELD_WIDTH).fill(0).map((_, i) => <Cell key={i} isGrid size={cellSize} />)}
                     </div>
@@ -90,6 +128,7 @@ const Board = ({ field, currentPiece, ghostY, cellSize, title, score, next, hold
         </div>
     );
 };
+
 
 function App() {
     const [cellSize, setCellSize] = useState(20);
@@ -320,66 +359,180 @@ function App() {
     );
 
     return (
-        <div style={{ height: '100vh', background: 'radial-gradient(circle at center, #1a1c2c 0%, #050505 100%)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif', overflow: 'hidden', touchAction: 'none' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: isMobile ? '15px' : '30px', alignItems: 'center', transform: isMobile ? 'scale(0.95)' : 'none' }}>
+        <div style={{ 
+            height: '100vh', 
+            background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)', 
+            color: '#fff', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            fontFamily: '"Orbitron", sans-serif', 
+            overflow: 'hidden', 
+            touchAction: 'none',
+            position: 'relative'
+        }}>
+            {/* Background Decorations */}
+            <div style={{
+                position: 'absolute',
+                top: '-10%',
+                right: '-5%',
+                width: '600px',
+                height: '600px',
+                background: 'radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, transparent 70%)',
+                filter: 'blur(50px)',
+                zIndex: 1
+            }} />
+            <div style={{
+                position: 'absolute',
+                bottom: '-10%',
+                left: '-5%',
+                width: '500px',
+                height: '500px',
+                background: 'radial-gradient(circle, rgba(255, 0, 85, 0.15) 0%, transparent 70%)',
+                filter: 'blur(50px)',
+                zIndex: 1
+            }} />
+
+            {/* Character Illustration (Floating AI Mascot) */}
+            <div style={{
+                position: 'absolute',
+                right: isMobile ? '-50px' : '20px',
+                bottom: isMobile ? '100px' : '50px',
+                width: isMobile ? '150px' : '300px',
+                height: isMobile ? '150px' : '300px',
+                zIndex: 2,
+                opacity: 0.8,
+                pointerEvents: 'none',
+                animation: 'float 6s ease-in-out infinite'
+            }}>
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="#00f2ff" strokeWidth="2" strokeDasharray="10,5" />
+                    <circle cx="100" cy="100" r="60" fill="rgba(0, 242, 255, 0.1)" stroke="#00f2ff" strokeWidth="1" />
+                    <path d="M70 80 Q100 60 130 80" stroke="#00f2ff" strokeWidth="4" fill="none" strokeLinecap="round" />
+                    <circle cx="85" cy="100" r="8" fill="#00f2ff">
+                        <animate attributeName="opacity" values="1;0.3;1" dur="3s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="115" cy="100" r="8" fill="#00f2ff">
+                        <animate attributeName="opacity" values="1;0.3;1" dur="3s" repeatCount="indefinite" />
+                    </circle>
+                    <path d="M80 130 Q100 150 120 130" stroke="#00f2ff" strokeWidth="4" fill="none" strokeLinecap="round" />
+                    <path d="M40 100 L20 100 M160 100 L180 100 M100 40 L100 20 M100 160 L100 180" stroke="#ff0055" strokeWidth="2" />
+                </svg>
+            </div>
+
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'row', 
+                gap: isMobile ? '15px' : '40px', 
+                alignItems: 'center', 
+                transform: isMobile ? 'scale(0.95)' : 'none',
+                position: 'relative',
+                zIndex: 10
+            }}>
                 <Board title="PLAYER" field={p1.field} currentPiece={p1.current} ghostY={p1.current ? calculateDropPosition(p1.current, p1.field) : 0} cellSize={cellSize} score={p1.score} next={p1.next} hold={p1.hold} effect={p1.effect} clearingLines={p1.clearingLines} />
-                <div style={{ width: '1px', height: '300px', background: 'rgba(255,255,255,0.1)' }} />
-                <Board title="CPU AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
+                <div style={{ width: '2px', height: '400px', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent)' }} />
+                <Board title="NEURAL AI" field={cpu.field} currentPiece={cpu.current} ghostY={cpu.current ? calculateDropPosition(cpu.current, cpu.field) : 0} cellSize={cellSize} score={cpu.score} next={cpu.next} hold={cpu.hold} isCPU effect={cpu.effect} clearingLines={cpu.clearingLines} />
             </div>
             
             {isMobile && <MobileControls />}
 
-            <button onClick={() => setIsMuted(!isMuted)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '10px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px' }}>
+            <button onClick={() => setIsMuted(!isMuted)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '12px', borderRadius: '50%', cursor: 'pointer', fontSize: '20px', zIndex: 100, backdropFilter: 'blur(5px)' }}>
                 {isMuted ? '🔇' : '🔊'}
             </button>
 
             {isGameOver && (
-                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(12px)' }}>
-                    <h1 style={{ color: winner ? (winner === 'PLAYER' || winner === 'PLAYER 1' ? '#00f0f0' : '#ff4b2b') : '#fff', fontSize: isMobile ? '2.5em' : '4em', textShadow: '0 0 30px rgba(255,255,255,0.2)' }}>{winner ? `${winner} WINS` : 'NEURAL TETRIS'}</h1>
-                    <button onClick={startGame} style={{ marginTop: '30px', padding: '15px 50px', fontSize: '1.2em', cursor: 'pointer', background: 'white', color: 'black', border: 'none', borderRadius: '40px', fontWeight: '900' }}>START BATTLE</button>
+                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(5, 5, 20, 0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(20px)' }}>
+                    <div style={{ position: 'relative' }}>
+                        <h1 style={{ 
+                            color: '#fff', 
+                            fontSize: isMobile ? '3em' : '6em', 
+                            fontWeight: '900',
+                            letterSpacing: '10px',
+                            textAlign: 'center',
+                            textShadow: '0 0 40px rgba(0, 242, 255, 0.5)'
+                        }}>
+                            {winner ? winner : 'NEURAL'}
+                            <br />
+                            <span style={{ color: '#ff0055' }}>TETRIS</span>
+                        </h1>
+                        {winner && <div style={{ textAlign: 'center', fontSize: '1.5em', marginTop: '-10px', color: '#00f2ff', fontWeight: 'bold' }}>CONGRATULATIONS</div>}
+                    </div>
+                    <button onClick={startGame} className="start-btn">START BATTLE</button>
                 </div>
             )}
 
             <style>{`
-                .board-container { transition: transform 0.1s, box-shadow 0.3s; }
-                .effect-attacked { animation: shake 0.4s focus-flash 0.4s; }
-                .ctrl-btn {
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
+                @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+                
+                .glass-panel {
+                    background: rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 16px;
+                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+                }
+
+                .start-btn {
+                    margin-top: 40px;
+                    padding: 18px 60px;
+                    font-size: 1.5em;
+                    cursor: pointer;
+                    background: linear-gradient(45deg, #00f2ff, #ff0055);
                     color: white;
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 12px;
-                    font-size: 1.2em;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+                    border: none;
+                    border-radius: 50px;
+                    font-weight: 900;
+                    letter-spacing: 2px;
+                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 0 30px rgba(0, 242, 255, 0.4);
+                }
+                .start-btn:hover {
+                    transform: scale(1.1) translateY(-5px);
+                    box-shadow: 0 0 50px rgba(255, 0, 85, 0.6);
+                }
+
+                .ctrl-btn {
+                    background: rgba(255, 255, 255, 0.08);
+                    backdrop-filter: blur(5px);
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    color: white;
                     user-select: none;
-                    -webkit-tap-highlight-color: transparent;
+                    transition: all 0.1s;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 }
                 .ctrl-btn:active {
-                    background: rgba(255, 255, 255, 0.3);
-                    transform: scale(0.95);
+                    background: rgba(255, 255, 255, 0.25);
+                    transform: scale(0.92);
                 }
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    20% { transform: translateX(-10px) rotate(-1deg); }
-                    40% { transform: translateX(10px) rotate(1deg); }
-                    60% { transform: translateX(-10px); }
-                    80% { transform: translateX(10px); }
+
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-20px) rotate(5deg); }
                 }
-                @keyframes focus-flash {
-                    0%, 100% { background-color: #000; }
-                    50% { background-color: rgba(255, 0, 0, 0.2); }
+
+                .board-container { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+                .effect-attacked { animation: glitch 0.3s infinite; }
+                
+                @keyframes glitch {
+                    0% { transform: translate(0); }
+                    20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg); }
+                    40% { transform: translate(-5px, -5px); }
+                    60% { transform: translate(5px, 5px); filter: hue-rotate(-90deg); }
+                    80% { transform: translate(5px, -5px); }
+                    100% { transform: translate(0); }
                 }
-                .cell-clearing { animation: flash 0.3s infinite; }
-                @keyframes flash {
-                    from { filter: brightness(1); }
-                    to { filter: brightness(3); }
+
+                .cell-clearing { animation: line-flash 0.4s ease-out forwards; }
+                @keyframes line-flash {
+                    0% { filter: brightness(1) white; transform: scale(1); }
+                    50% { filter: brightness(5); transform: scale(1.1); }
+                    100% { filter: brightness(1); transform: scale(0); opacity: 0; }
                 }
             `}</style>
         </div>
     );
 }
+
 
 export default App;
