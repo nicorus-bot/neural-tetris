@@ -299,20 +299,22 @@ function App() {
             zIndex: 50,
             pointerEvents: 'none'
         }}>
-            {/* 十字キー的な配置（左下） */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 50px)', gridTemplateRows: 'repeat(2, 50px)', gap: '8px', pointerEvents: 'auto' }}>
-                <div />
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('rotate'); }} className="ctrl-btn" style={{ background: 'rgba(0, 240, 240, 0.3)', border: '2px solid #00f0f0' }}>↻</button>
-                <div />
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('left'); }} className="ctrl-btn">←</button>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('down'); }} className="ctrl-btn">↓</button>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('right'); }} className="ctrl-btn">→</button>
+            {/* 左側：ホールド・ハードドロップ ＆ 移動（十字キー風） */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', pointerEvents: 'auto' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '55px', height: '55px', borderRadius: '12px', fontSize: '0.8em', fontWeight: 'bold' }}>HOLD</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '55px', height: '55px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.2)', fontSize: '1.5em' }}>▼</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 55px)', gap: '8px' }}>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('left'); }} className="ctrl-btn">←</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('down'); }} className="ctrl-btn">↓</button>
+                    <button onTouchStart={(e) => { e.preventDefault(); handleAction('right'); }} className="ctrl-btn">→</button>
+                </div>
             </div>
 
-            {/* アクションボタン（右下） */}
-            <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', pointerEvents: 'auto' }}>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('hold'); }} className="ctrl-btn" style={{ width: '55px', height: '55px', borderRadius: '50%', fontWeight: 'bold' }}>HOLD</button>
-                <button onTouchStart={(e) => { e.preventDefault(); handleAction('drop'); }} className="ctrl-btn" style={{ width: '75px', height: '75px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)', fontSize: '1.8em' }}>▼</button>
+            {/* 右側：回転 */}
+            <div style={{ pointerEvents: 'auto', paddingBottom: '10px' }}>
+                <button onTouchStart={(e) => { e.preventDefault(); handleAction('rotate'); }} className="ctrl-btn" style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(0, 240, 240, 0.3)', border: '2px solid #00f0f0', fontSize: '2.5em', boxShadow: '0 0 20px rgba(0, 240, 240, 0.2)' }}>↻</button>
             </div>
         </div>
     );
